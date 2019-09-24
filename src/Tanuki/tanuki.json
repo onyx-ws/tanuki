@@ -1,0 +1,36 @@
+{
+  "paths": {
+    "/api/v0.1/ping": {
+      "get": {
+        "tags": [
+          "ping"
+        ],
+        "description": "ping",
+        "summary": "Execute test call",
+        "operationId": "ping",
+        "min-delay": 100,
+        "max-delay": 300,
+        "responses": {
+          "200": {
+            "description": "Ping reply",
+            "status_code": 200,
+            "content": {
+              "application/json": {
+                "examples": {
+                  "reply-1": {
+                    "summary": "Hello World Example",
+                    "value": "{ \"message\": \"Hello World Coded!\" }"
+                  },
+                  "reply-2": {
+                    "summary": "Hello World Example",
+                    "externalValue": "./ping.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
