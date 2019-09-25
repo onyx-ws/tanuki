@@ -18,7 +18,7 @@ namespace Onyx.Tanuki.Configuration.Json
             foreach (JsonProperty property in json.Value.EnumerateObject())
             {
                 if (property.Name == "summary") example.Summary = property.Value.GetString();
-                if (property.Name == "value") example.Value = property.Value.GetString();
+                if (property.Name == "value") example.Value = property.Value.ValueKind == JsonValueKind.String ? property.Value.GetString() : property.Value.ToString();
                 if (property.Name == "externalValue") example.FetchExternalValue(property.Value.GetString());
             }
             return example;
