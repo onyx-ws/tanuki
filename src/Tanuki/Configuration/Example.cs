@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Onyx.Tanuki.Configuration
@@ -28,5 +31,20 @@ namespace Onyx.Tanuki.Configuration
         /// Embedded literal example. The value field and externalValue field are mutually exclusive. To represent examples of media types that cannot naturally represented in JSON or YAML, use a string value to contain the example, escaping where necessary.
         /// </summary>
         public string Value { get; set; }
+
+        /// <summary>
+        /// Fetches sample from external resource
+        /// </summary>
+        /// <param name="url">The absolute URL of the sample file</param>
+        public void FetchExternalValue(string url)
+        {
+            try
+            {
+                using HttpClient client = new HttpClient();
+                Value = client.GetStringAsync(url).Result;
+                ExternalValue = url;
+            }
+            catch { }
+        }
     }
 }

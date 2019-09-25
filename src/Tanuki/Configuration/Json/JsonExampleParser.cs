@@ -19,6 +19,7 @@ namespace Onyx.Tanuki.Configuration.Json
             {
                 if (property.Name == "summary") example.Summary = property.Value.GetString();
                 if (property.Name == "value") example.Value = property.Value.GetString();
+                if (property.Name == "externalValue") example.FetchExternalValue(property.Value.GetString());
             }
             return example;
         }

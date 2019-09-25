@@ -23,7 +23,7 @@
                   },
                   "reply-2": {
                     "summary": "Hello World Example",
-                    "externalValue": "./ping.json"
+                    "externalValue": "https://raw.githubusercontent.com/onyx-ws/tanuki/master/src/Tanuki/tanuki.json"
                   }
                 }
               }
