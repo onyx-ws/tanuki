@@ -1,0 +1,25 @@
+{
+  "paths": {
+    "/api/example": {
+      "get": {
+        "summary": "Example GET endpoint",
+        "operationId": "getExample",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "default": {
+                    "summary": "Default example",
+                    "value": "{\"message\": \"Hello from Tanuki!\"}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

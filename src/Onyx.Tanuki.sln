@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Onyx.Tanuki", "Tanuki\Onyx.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tanuki.Runtime", "Tanuki.Runtime\Tanuki.Runtime.csproj", "{0A234E81-AE31-4B41-AD0E-4A5C0D94C28A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tanuki.Cli", "Tanuki.Cli\Tanuki.Cli.csproj", "{241D3B1E-A119-478A-9737-26FCD1478036}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{0A234E81-AE31-4B41-AD0E-4A5C0D94C28A}.Release|x64.Build.0 = Release|Any CPU
 		{0A234E81-AE31-4B41-AD0E-4A5C0D94C28A}.Release|x86.ActiveCfg = Release|Any CPU
 		{0A234E81-AE31-4B41-AD0E-4A5C0D94C28A}.Release|x86.Build.0 = Release|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Debug|x64.Build.0 = Debug|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Debug|x86.Build.0 = Debug|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Release|Any CPU.Build.0 = Release|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Release|x64.ActiveCfg = Release|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Release|x64.Build.0 = Release|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Release|x86.ActiveCfg = Release|Any CPU
+		{241D3B1E-A119-478A-9737-26FCD1478036}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
