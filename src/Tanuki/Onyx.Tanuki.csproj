@@ -15,4 +15,8 @@
     <None Remove="src\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Tanuki.Runtime\Tanuki.Runtime.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Tanuki\Onyx.Tanuki.csproj" />
+    <ProjectReference Include="..\Tanuki\Onyx.Tanuki.csproj" Aliases="Tanuki" />
   </ItemGroup>
 
 </Project>

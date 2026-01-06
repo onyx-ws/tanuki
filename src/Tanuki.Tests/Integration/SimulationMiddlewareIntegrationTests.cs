@@ -1,3 +1,5 @@
+extern alias Tanuki;
+
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -6,8 +8,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Onyx.Tanuki;
-using Onyx.Tanuki.Configuration;
+using Tanuki::Onyx.Tanuki;
+using Tanuki::Onyx.Tanuki.Configuration;
 using Xunit;
 
 namespace Onyx.Tanuki.Tests.Integration;
@@ -159,7 +161,7 @@ public class SimulationMiddlewareIntegrationTests : IClassFixture<TestWebApplica
 /// <summary>
 /// Factory for creating test web application
 /// </summary>
-public class TestWebApplicationFactory : WebApplicationFactory<Program>
+public class TestWebApplicationFactory : WebApplicationFactory<Tanuki::Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
