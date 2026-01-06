@@ -1,23 +1,46 @@
-﻿using Microsoft.AspNetCore.Builder;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Onyx.Tanuki.Middleware;
+using Onyx.Tanuki.Simulation;
 
-namespace Onyx.Tanuki
+namespace Onyx.Tanuki;
+
+/// <summary>
+/// Extension methods for configuring Tanuki middleware in the application pipeline
+/// </summary>
+public static class TanukiBuilder
 {
-    public static class TanukiBuilder
+    /// <summary>
+    /// Adds the Tanuki simulation middleware to the application pipeline.
+    /// This is an alias for <see cref="UseSimulator"/>.
+    /// </summary>
+    /// <param name="app">The application builder</param>
+    /// <returns>The application builder for chaining</returns>
+    public static IApplicationBuilder UseTanuki(this IApplicationBuilder app)
     {
-        public static IApplicationBuilder UseTanuki(this IApplicationBuilder app)
-        {
-            UseSimulator(app);
-            return app;
-        }
+        return UseSimulator(app);
+    }
 
-        public static IApplicationBuilder UseSimulator(this IApplicationBuilder app)
-        {
-            app.UseMiddleware<Onyx.Tanuki.Simulation.SimulationMiddleware>();
-            return app;
-        }
+    /// <summary>
+    /// Adds the Tanuki exception handling middleware to the application pipeline.
+    /// This middleware should be added early in the pipeline to catch exceptions from downstream middleware.
+    /// </summary>
+    /// <param name="app">The application builder</param>
+    /// <returns>The application builder for chaining</returns>
+    public static IApplicationBuilder UseTanukiExceptionHandling(this IApplicationBuilder app)
+    {
+        app.UseMiddleware<TanukiExceptionHandlingMiddleware>();
+        return app;
+    }
+
+    /// <summary>
+    /// Adds the Tanuki simulation middleware to the application pipeline.
+    /// This middleware intercepts requests and returns mock responses based on the tanuki.json configuration.
+    /// </summary>
+    /// <param name="app">The application builder</param>
+    /// <returns>The application builder for chaining</returns>
+    public static IApplicationBuilder UseSimulator(this IApplicationBuilder app)
+    {
+        app.UseMiddleware<SimulationMiddleware>();
+        return app;
     }
 }

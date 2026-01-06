@@ -1,30 +1,93 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
+using Onyx.Tanuki.Configuration;
+using Onyx.Tanuki.Configuration.Exceptions;
 
-namespace Onyx.Tanuki.Configuration.Json
+namespace Onyx.Tanuki.Configuration.Json;
+
+public class JsonContentParser
 {
-    public class JsonContentParser
+    public static Content Parse(JsonProperty json)
     {
-        public static Content Parse(JsonProperty json)
+        if (string.IsNullOrWhiteSpace(json.Name))
         {
-            Content content = new Content
+            throw new TanukiConfigurationException(
+                "Content media type cannot be empty.");
+        }
+
+        if (json.Value.ValueKind != JsonValueKind.Object)
+        {
+            throw new TanukiConfigurationException(
+                $"Content '{json.Name}' must be a JSON object. Found: {json.Value.ValueKind}");
+        }
+
+        try
+        {
+            var content = new Content
             {
                 MediaType = json.Name
             };
 
-            foreach (JsonProperty property in json.Value.EnumerateObject())
+            foreach (var property in json.Value.EnumerateObject())
             {
-                if (property.Name == "examples") content.Examples = ParseExamples(property.Value);
+                if (property.Name == "examples")
+                {
+                    if (property.Value.ValueKind == JsonValueKind.Object)
+                        content.Examples = ParseExamples(property.Value, json.Name);
+                    else
+                        throw new TanukiConfigurationException(
+                            $"The 'examples' property for content '{json.Name}' must be a JSON object.");
+                }
             }
+
+            if (content.Examples.Count == 0)
+            {
+                throw new TanukiConfigurationException(
+                    $"Content '{json.Name}' must have at least one example defined in the 'examples' property.");
+            }
+
             return content;
         }
-
-        private static List<Example> ParseExamples(JsonElement json)
+        catch (TanukiConfigurationException)
         {
-            return json.EnumerateObject().Select(example => JsonExampleParser.Parse(example)).ToList<Example>();
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TanukiConfigurationException(
+                $"An error occurred while parsing content '{json.Name}'. Please check the content structure.", ex);
+        }
+    }
+
+    private static List<Example> ParseExamples(JsonElement json, string mediaType)
+    {
+        try
+        {
+            var examples = json.EnumerateObject()
+                .Select(example =>
+                {
+                    try
+                    {
+                        return JsonExampleParser.Parse(example);
+                    }
+                    catch (TanukiConfigurationException ex)
+                    {
+                        throw new TanukiConfigurationException(
+                            $"Error parsing example '{example.Name}' for content '{mediaType}': {ex.Message}", ex);
+                    }
+                })
+                .ToList();
+
+            return examples;
+        }
+        catch (TanukiConfigurationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TanukiConfigurationException(
+                $"Error parsing examples for content '{mediaType}': {ex.Message}", ex);
         }
     }
 }

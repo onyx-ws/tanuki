@@ -1,22 +1,62 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
+using Onyx.Tanuki.Configuration;
+using Onyx.Tanuki.Configuration.Exceptions;
 
-namespace Onyx.Tanuki.Configuration.Json
+namespace Onyx.Tanuki.Configuration.Json;
+
+public class JsonConfigParser
 {
-    public class JsonConfigParser
+    public static Tanuki Parse(string json)
     {
-        public static Tanuki Parse(string json)
+        if (string.IsNullOrWhiteSpace(json))
         {
-            using var jDocument = JsonDocument.Parse(json);
-            var jTanuki = jDocument.RootElement;
+            throw new TanukiConfigurationException(
+                "Configuration JSON is null or empty. Please provide a valid JSON configuration.");
+        }
 
-            Tanuki tanuki = new Tanuki();
-            tanuki.Paths = JsonPathsParser.Parse(jTanuki);
+        JsonDocument? jDocument = null;
+        try
+        {
+            jDocument = JsonDocument.Parse(json, new JsonDocumentOptions
+            {
+                CommentHandling = JsonCommentHandling.Skip,
+                AllowTrailingCommas = true
+            });
+        }
+        catch (JsonException ex)
+        {
+            throw new TanukiConfigurationException(
+                $"Invalid JSON format. Please check your configuration file syntax. Error: {ex.Message}", ex);
+        }
 
-            return tanuki;
+        try
+        {
+            using (jDocument)
+            {
+                var jTanuki = jDocument.RootElement;
+
+                if (jTanuki.ValueKind != JsonValueKind.Object)
+                {
+                    throw new TanukiConfigurationException(
+                        "Configuration root must be a JSON object. Found: " + jTanuki.ValueKind);
+                }
+
+                var tanuki = new Tanuki
+                {
+                    Paths = JsonPathsParser.Parse(jTanuki)
+                };
+
+                return tanuki;
+            }
+        }
+        catch (TanukiConfigurationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TanukiConfigurationException(
+                "An error occurred while parsing the configuration. Please check the configuration structure.", ex);
         }
     }
 }

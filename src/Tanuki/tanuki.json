@@ -1,29 +1,107 @@
 {
+  // Tanuki Configuration File
+  // This file defines the REST API endpoints that Tanuki will simulate
+  
   "paths": {
+    // Example: Simple GET endpoint with delay simulation
     "/api/v0.1/ping": {
       "get": {
         "tags": [
-          "ping"
+          "ping",
+          "health"
         ],
-        "description": "ping",
+        "description": "A simple ping endpoint to test the API",
         "summary": "Execute test call",
         "operationId": "ping",
+        
+        // Delay simulation: Random delay between 100-300ms to simulate network latency
         "min-delay": 100,
         "max-delay": 300,
+        
         "responses": {
+          // Success response
           "200": {
             "description": "Ping reply",
-            "status_code": 200,
             "content": {
               "application/json": {
                 "examples": {
+                  // Example 1: Inline JSON value
                   "reply-1": {
                     "summary": "Hello World Example",
-                    "value": "{ \"message\": \"Hello World Coded!\" }"
+                    "value": "{ \"message\": \"Hello World Coded!\", \"timestamp\": \"2024-01-01T00:00:00Z\" }"
                   },
+                  
+                  // Example 2: External value from URL (will be fetched and cached)
                   "reply-2": {
-                    "summary": "Hello World Example",
+                    "summary": "External Example",
                     "externalValue": "https://raw.githubusercontent.com/onyx-ws/tanuki/master/src/Tanuki/tanuki.json"
+                  }
+                }
+              }
+            }
+          },
+          
+          // Error response example
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "summary": "Error response",
+                    "value": "{ \"error\": \"Internal server error\", \"code\": 500 }"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      
+      // Example: POST endpoint
+      "post": {
+        "summary": "Create a new resource",
+        "operationId": "createPing",
+        "responses": {
+          "201": {
+            "description": "Resource created",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "created": {
+                    "summary": "Created resource",
+                    "value": "{ \"id\": 123, \"status\": \"created\" }"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    
+    // Example: Endpoint with multiple content types
+    "/api/v0.1/data": {
+      "get": {
+        "summary": "Get data in multiple formats",
+        "operationId": "getData",
+        "responses": {
+          "200": {
+            "description": "Data retrieved successfully",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "json": {
+                    "summary": "JSON format",
+                    "value": "{ \"data\": [1, 2, 3] }"
+                  }
+                }
+              },
+              "application/xml": {
+                "examples": {
+                  "xml": {
+                    "summary": "XML format",
+                    "value": "<data><item>1</item><item>2</item><item>3</item></data>"
                   }
                 }
               }
