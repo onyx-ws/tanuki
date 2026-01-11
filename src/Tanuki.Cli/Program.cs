@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using Tanuki.Cli.Commands;
 
 var rootCommand = new RootCommand("Tanuki - Developer-Flow-First API Simulator");

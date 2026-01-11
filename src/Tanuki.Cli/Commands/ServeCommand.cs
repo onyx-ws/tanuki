@@ -1,15 +1,18 @@
 using System.CommandLine;
 using System.Net;
+using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Onyx.Tanuki;
 using Onyx.Tanuki.Configuration;
 using Onyx.Tanuki.Constants;
+using Onyx.Tanuki.OpenApi;
 using Onyx.Tanuki.Simulation;
 using Tanuki.Cli.Middleware;
 
@@ -46,6 +49,13 @@ public class ServeCommand
         };
         configFileOption.SetDefaultValue(new FileInfo("./tanuki.json"));
 
+        var openApiFileOption = new Option<FileInfo>(
+            aliases: new[] { "--openapi", "-o" },
+            description: "Path to OpenAPI specification file (JSON or YAML) or directory containing openapi.yaml/yml/json")
+        {
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
         var verboseOption = new Option<bool>(
             aliases: new[] { "--verbose", "-v" },
             description: "Enable verbose logging (shows request/response details)")
@@ -58,17 +68,18 @@ public class ServeCommand
         command.AddOption(portOption);
         command.AddOption(hostOption);
         command.AddOption(configFileOption);
+        command.AddOption(openApiFileOption);
         command.AddOption(verboseOption);
 
-        command.SetHandler(async (int port, string host, FileInfo configFile, bool verbose) =>
+        command.SetHandler(async (int port, string host, FileInfo configFile, FileInfo? openApiFile, bool verbose) =>
         {
-            await ExecuteAsync(port, host, configFile, verbose);
-        }, portOption, hostOption, configFileOption, verboseOption);
+            await ExecuteAsync(port, host, configFile, openApiFile, verbose);
+        }, portOption, hostOption, configFileOption, openApiFileOption, verboseOption);
 
         return command;
     }
 
-    private static async Task ExecuteAsync(int port, string host, FileInfo? configFile, bool verbose)
+    private static async Task ExecuteAsync(int port, string host, FileInfo? configFile, FileInfo? openApiFile, bool verbose)
     {
         // Validate port range
         if (port < 1 || port > 65535)
@@ -126,12 +137,70 @@ public class ServeCommand
             builder.Configuration["AllowedHosts"] = host;
         }
 
-        // Configure Tanuki configuration file path
-        if (configFile != null && configFile.Exists)
+        // Determine configuration source: OpenAPI takes precedence over config file
+        // Use dynamic to avoid type ambiguity between Onyx.Tanuki and Tanuki.Runtime
+        // Both projects define the same types in the same namespace, causing CS0433
+        object? tanukiConfig = null;
+        
+        if (openApiFile != null)
         {
-            // Set the Tanuki:ConfigurationFilePath configuration value
+            // OpenAPI mode: parse OpenAPI spec and generate Tanuki config
+            try
+            {
+                Console.WriteLine($"Loading OpenAPI specification from: {openApiFile.FullName}");
+                
+                // Create OpenAPI document loader (no logger needed for CLI - errors are shown to user)
+                var fileResolver = new OpenApiFileResolver();
+                var fileLoader = new OpenApiFileLoader();
+                var parser = new OpenApiParser(logger: null);
+                var validator = new OpenApiValidator();
+                var documentLoader = new OpenApiDocumentLoader(fileResolver, fileLoader, parser, validator, logger: null);
+                
+                // Load OpenAPI document
+                var openApiDocument = await documentLoader.LoadAsync(openApiFile.FullName);
+                
+                // Map OpenAPI document to Tanuki config
+                // The mapper returns Onyx.Tanuki.Configuration.Tanuki
+                var mapper = new OpenApiMapper();
+                tanukiConfig = mapper.Map(openApiDocument);
+                
+                Console.WriteLine($"✓ OpenAPI specification loaded and mapped successfully");
+            }
+            catch (OpenApiParseException ex)
+            {
+                Console.Error.WriteLine($"\n✗ Failed to parse OpenAPI file: {ex.FilePath}");
+                foreach (var error in ex.Errors)
+                {
+                    var location = !string.IsNullOrEmpty(error.Pointer) 
+                        ? $" at {error.Pointer}" 
+                        : error.Line.HasValue 
+                            ? $" at line {error.Line}, column {error.Column}" 
+                            : "";
+                    Console.Error.WriteLine($"  - {error.Message}{location}");
+                }
+                
+                if (ex.Warnings != null && ex.Warnings.Any())
+                {
+                    Console.Error.WriteLine("\nWarnings:");
+                    foreach (var warning in ex.Warnings)
+                    {
+                        Console.Error.WriteLine($"  ⚠ {warning.Message}");
+                    }
+                }
+                Environment.ExitCode = 1;
+                return;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"\n✗ Error loading OpenAPI specification: {ex.Message}");
+                Environment.ExitCode = 1;
+                return;
+            }
+        }
+        else if (configFile != null && configFile.Exists)
+        {
+            // Traditional mode: use tanuki.json file
             builder.Configuration["Tanuki:ConfigurationFilePath"] = configFile.FullName;
-            // Also add the tanuki.json file as a configuration source (for any other config it might contain)
             builder.Configuration.AddJsonFile(configFile.FullName, optional: false, reloadOnChange: true);
         }
         else if (configFile != null && !configFile.Exists)
@@ -140,23 +209,55 @@ public class ServeCommand
             Console.WriteLine($"\nError: Configuration file not found: {configFile.FullName}");
             Console.WriteLine("\nTo create a sample configuration file, run: tanuki init");
             Console.WriteLine("Or specify a different configuration file with: tanuki serve --config <path>");
+            Console.WriteLine("Or use an OpenAPI specification with: tanuki serve --openapi <path>");
             Environment.ExitCode = 1;
             return;
         }
-        // If configFile is null, AddTanuki will use the default from TanukiOptions (./tanuki.json)
 
-        // Add Tanuki services using extension method (handles type resolution)
-        // This will try to load the config file (either specified or default)
+        // Add Tanuki services
         try
         {
-            builder.Services.AddTanuki(builder.Configuration);
+            if (tanukiConfig is not null)
+            {
+                // OpenAPI mode: use InMemoryConfigurationService
+                // Add all Tanuki services first (this registers all dependencies)
+                builder.Services.AddTanuki(builder.Configuration);
+                
+                // Override ITanukiConfigurationService with InMemoryConfigurationService
+                // Use AddSingleton to replace the TryAddSingleton registration from AddTanuki
+                // Note: We use reflection to avoid type ambiguity (CS0433) between Onyx.Tanuki and Tanuki.Runtime
+                var configForService = tanukiConfig;
+                // Get assembly from TanukiServices which is only in Onyx.Tanuki (not in Tanuki.Runtime)
+                var onyxTanukiAssembly = typeof(TanukiServices).Assembly;
+                var inMemoryServiceType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.InMemoryConfigurationService")!;
+                var serviceInterfaceType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.ITanukiConfigurationService")!;
+                var validatorType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.IConfigurationValidator")!;
+                var fetcherType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.IExternalValueFetcher")!;
+                var loggerType = typeof(ILogger<>).MakeGenericType(inMemoryServiceType);
+                
+                builder.Services.AddSingleton(serviceInterfaceType, sp =>
+                {
+                    var validator = sp.GetRequiredService(validatorType);
+                    var externalValueFetcher = sp.GetRequiredService(fetcherType);
+                    var logger = sp.GetService(loggerType);
+                    // Use reflection to create InMemoryConfigurationService with the config object
+                    var constructor = inMemoryServiceType.GetConstructors()[0];
+                    return constructor.Invoke(new[] { configForService, validator, externalValueFetcher, logger });
+                });
+            }
+            else
+            {
+                // Traditional mode: use file-based TanukiConfigurationService
+                builder.Services.AddTanuki(builder.Configuration);
+            }
         }
         catch (Exception ex) when (ex is Onyx.Tanuki.Configuration.Exceptions.TanukiConfigurationException)
         {
-            // Configuration file error - provide helpful message
+            // Configuration error - provide helpful message
             Console.WriteLine($"\nError: {ex.Message}");
             Console.WriteLine("\nTo create a sample configuration file, run: tanuki init");
             Console.WriteLine("Or specify a different configuration file with: tanuki serve --config <path>");
+            Console.WriteLine("Or use an OpenAPI specification with: tanuki serve --openapi <path>");
             Environment.ExitCode = 1;
             return;
         }
