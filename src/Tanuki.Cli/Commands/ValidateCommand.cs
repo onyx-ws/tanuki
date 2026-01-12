@@ -19,7 +19,6 @@ public class ValidateCommand
         {
             Arity = ArgumentArity.ZeroOrOne
         };
-        configFileOption.SetDefaultValue(new FileInfo("./tanuki.json"));
 
         var openApiFileOption = new Option<FileInfo>(
             aliases: new[] { "--openapi", "-o" },
