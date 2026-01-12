@@ -47,7 +47,11 @@ public class OpenApiParser : IOpenApiParser
             
             if (!string.IsNullOrEmpty(baseDirectory))
             {
-                settings.BaseUrl = new Uri($"file://{baseDirectory.Replace('\\', '/')}/");
+                // Use Uri constructor to properly handle file paths cross-platform
+                // This ensures correct URI format: file:///C:/path on Windows, file:///path on Unix/Linux
+                // The Uri class automatically handles the three-slash format (file:///) required for absolute paths
+                var basePath = Path.GetFullPath(baseDirectory);
+                settings.BaseUrl = new Uri(basePath, UriKind.Absolute);
             }
             
             // Use OpenApiDocument.LoadAsync with stream - the library auto-detects format from stream content
