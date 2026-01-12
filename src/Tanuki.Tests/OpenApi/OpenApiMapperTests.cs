@@ -120,6 +120,12 @@ public class OpenApiMapperTests
             var response = operation.Responses[0];
             Assert.Equal("200", response.StatusCode);
             Assert.Equal("Success", response.Description);
+            // Verify string example is properly JSON-encoded with quotes
+            Assert.Single(response.Content);
+            var content = response.Content[0];
+            Assert.Single(content.Examples);
+            var example = content.Examples[0];
+            Assert.Equal("\"pong\"", example.Value); // String should be JSON-encoded with quotes
         }
         finally
         {
@@ -227,6 +233,69 @@ public class OpenApiMapperTests
             Assert.Equal(2, operation.Tags.Count);
             Assert.Contains("pets", operation.Tags);
             Assert.Contains("read", operation.Tags);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Map_WithStringExampleInExamples_MapsWithJsonQuotes()
+    {
+        // Arrange - Test that string examples in the examples object are properly JSON-encoded
+        var tempFile = System.IO.Path.GetTempFileName() + ".json";
+        try
+        {
+            var json = @"{
+  ""openapi"": ""3.0.0"",
+  ""info"": {
+    ""title"": ""Test API"",
+    ""version"": ""1.0.0""
+  },
+  ""paths"": {
+    ""/hello"": {
+      ""get"": {
+        ""operationId"": ""hello"",
+        ""responses"": {
+          ""200"": {
+            ""description"": ""Success"",
+            ""content"": {
+              ""application/json"": {
+                ""examples"": {
+                  ""greeting"": {
+                    ""value"": ""hello world""
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}";
+            await File.WriteAllTextAsync(tempFile, json);
+            
+            var document = await _documentLoader.LoadAsync(tempFile);
+
+            // Act
+            var result = _mapper.Map(document);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Paths);
+            var response = result.Paths[0].Operations[0].Responses[0];
+            Assert.Single(response.Content);
+            var content = response.Content[0];
+            Assert.Single(content.Examples);
+            var example = content.Examples[0];
+            Assert.Equal("greeting", example.Name);
+            // String example should be JSON-encoded with quotes (valid JSON)
+            Assert.Equal("\"hello world\"", example.Value);
         }
         finally
         {

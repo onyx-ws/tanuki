@@ -309,10 +309,20 @@ public class OpenApiMapper : IOpenApiMapper
         // Fallback: try to serialize the whole object
         try
         {
+            // Check if value is a string before serializing
+            if (value is string strValue)
+            {
+                return System.Text.Json.JsonSerializer.Serialize(strValue);
+            }
             return System.Text.Json.JsonSerializer.Serialize(value);
         }
         catch
         {
+            // Final fallback: if value is a string, JSON-encode it; otherwise use ToString()
+            if (value is string finalStrValue)
+            {
+                return System.Text.Json.JsonSerializer.Serialize(finalStrValue);
+            }
             return value?.ToString() ?? string.Empty;
         }
     }
