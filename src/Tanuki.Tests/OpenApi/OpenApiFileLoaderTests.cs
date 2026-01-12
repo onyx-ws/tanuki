@@ -35,7 +35,7 @@ public class OpenApiFileLoaderTests
     public async Task LoadFileStreamAsync_WithNonExistentFile_ThrowsFileNotFoundException()
     {
         // Arrange
-        var nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".yaml");
+        var nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".yaml");
 
         // Act & Assert
         await Assert.ThrowsAsync<FileNotFoundException>(
@@ -133,7 +133,7 @@ public class OpenApiFileLoaderTests
     public void GetFileInfo_WithNonExistentFile_ReturnsFileInfoWithExistsFalse()
     {
         // Arrange
-        var nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".yaml");
+        var nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".yaml");
 
         // Act
         var fileInfo = _loader.GetFileInfo(nonExistentFile);

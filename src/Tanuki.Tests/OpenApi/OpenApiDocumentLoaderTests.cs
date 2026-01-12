@@ -36,7 +36,7 @@ public class OpenApiDocumentLoaderTests
         var filePath = "test.yaml";
         var resolvedPath = Path.GetFullPath("test.yaml");
         var baseDir = Path.GetDirectoryName(resolvedPath)!;
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("test"));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("test"));
 
         _mockFileResolver.Setup(r => r.ResolveFile(filePath)).Returns(resolvedPath);
         _mockFileResolver.Setup(r => r.ResolveBaseDirectory(resolvedPath, null)).Returns(baseDir);
@@ -79,7 +79,7 @@ public class OpenApiDocumentLoaderTests
         var directoryPath = "./test-dir";
         var resolvedFile = Path.Combine(directoryPath, "openapi.yaml");
         var baseDir = Path.GetDirectoryName(resolvedFile)!;
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("test"));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("test"));
 
         _mockFileResolver.Setup(r => r.ResolveFile(directoryPath)).Returns(resolvedFile);
         _mockFileResolver.Setup(r => r.ResolveBaseDirectory(resolvedFile, null)).Returns(baseDir);
@@ -115,7 +115,7 @@ public class OpenApiDocumentLoaderTests
         var filePath = "test.yaml";
         var resolvedPath = Path.GetFullPath("test.yaml");
         var explicitBaseDir = Path.GetFullPath("./explicit-base");
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("test"));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("test"));
 
         _mockFileResolver.Setup(r => r.ResolveFile(filePath)).Returns(resolvedPath);
         _mockFileResolver.Setup(r => r.ResolveBaseDirectory(resolvedPath, explicitBaseDir)).Returns(explicitBaseDir);
@@ -156,7 +156,7 @@ public class OpenApiDocumentLoaderTests
         var filePath = "test.yaml";
         var resolvedPath = Path.GetFullPath("test.yaml");
         var baseDir = Path.GetDirectoryName(resolvedPath)!;
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("invalid"));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("invalid"));
 
         _mockFileResolver.Setup(r => r.ResolveFile(filePath)).Returns(resolvedPath);
         _mockFileResolver.Setup(r => r.ResolveBaseDirectory(resolvedPath, null)).Returns(baseDir);
@@ -222,7 +222,7 @@ public class OpenApiDocumentLoaderTests
         var filePath = "test.yaml";
         var resolvedPath = Path.GetFullPath("test.yaml");
         var baseDir = Path.GetDirectoryName(resolvedPath)!;
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("test"));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("test"));
 
         _mockFileResolver.Setup(r => r.ResolveFile(filePath)).Returns(resolvedPath);
         _mockFileResolver.Setup(r => r.ResolveBaseDirectory(resolvedPath, null)).Returns(baseDir);

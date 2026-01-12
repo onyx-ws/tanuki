@@ -118,7 +118,7 @@ public class OpenApiFileResolverTests
     public void ResolveFile_WithNonExistentFile_ThrowsFileNotFoundException()
     {
         // Arrange
-        var nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".yaml");
+        var nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".yaml");
 
         // Act & Assert
         Assert.Throws<FileNotFoundException>(() => _resolver.ResolveFile(nonExistentFile));
