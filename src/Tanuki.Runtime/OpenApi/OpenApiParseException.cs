@@ -53,21 +53,21 @@ public class OpenApiParseException : Exception
     {
         var json = new
         {
-            filePath = FilePath,
+            valid = false,
             errors = Errors.Select(e => new
             {
                 message = e.Message,
                 pointer = e.Pointer,
                 line = e.Line,
                 column = e.Column
-            }),
+            }).ToArray(),
             warnings = Warnings?.Select(w => new
             {
                 message = w.Message,
                 pointer = w.Pointer,
                 line = w.Line,
                 column = w.Column
-            })
+            }).ToArray()
         };
 
         return JsonSerializer.Serialize(json, new JsonSerializerOptions
