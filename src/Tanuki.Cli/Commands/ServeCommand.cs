@@ -47,7 +47,6 @@ public class ServeCommand
         {
             Arity = ArgumentArity.ZeroOrOne
         };
-        configFileOption.SetDefaultValue(new FileInfo("./tanuki.json"));
 
         var openApiFileOption = new Option<FileInfo>(
             aliases: new[] { "--openapi", "-o" },
@@ -71,7 +70,7 @@ public class ServeCommand
         command.AddOption(openApiFileOption);
         command.AddOption(verboseOption);
 
-        command.SetHandler(async (int port, string host, FileInfo configFile, FileInfo? openApiFile, bool verbose) =>
+        command.SetHandler(async (int port, string host, FileInfo? configFile, FileInfo? openApiFile, bool verbose) =>
         {
             await ExecuteAsync(port, host, configFile, openApiFile, verbose);
         }, portOption, hostOption, configFileOption, openApiFileOption, verboseOption);
@@ -103,6 +102,12 @@ public class ServeCommand
             Console.Error.WriteLine("Error: Cannot specify both --config and --openapi. Please specify only one.");
             Environment.ExitCode = 1;
             return;
+        }
+
+        // If neither option is provided, default to config file
+        if (configFile == null && openApiFile == null)
+        {
+            configFile = new FileInfo("./tanuki.json");
         }
 
         Console.WriteLine($"Starting Tanuki server on {host}:{port}...");

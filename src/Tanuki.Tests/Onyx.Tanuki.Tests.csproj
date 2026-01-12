@@ -17,13 +17,14 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Tanuki\Onyx.Tanuki.csproj" Aliases="Tanuki" />
     <ProjectReference Include="..\Tanuki.Runtime\Tanuki.Runtime.csproj" />
+    <ProjectReference Include="..\Tanuki.Cli\Tanuki.Cli.csproj" />
   </ItemGroup>
 
 </Project>
