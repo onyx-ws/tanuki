@@ -41,6 +41,10 @@ public class ServeCommand
         };
         hostOption.SetDefaultValue("localhost");
 
+        // NOTE: Do NOT set a default value on configFileOption using SetDefaultValue().
+        // If a default value is set here, it would cause configFile to never be null,
+        // breaking the mutual exclusivity check when --openapi is specified.
+        // Instead, we handle the default value in the ExecuteAsync method (see line 108-111).
         var configFileOption = new Option<FileInfo>(
             aliases: new[] { "--config", "-c" },
             description: "Path to tanuki.json configuration file")
