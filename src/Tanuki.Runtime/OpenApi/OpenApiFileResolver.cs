@@ -25,13 +25,13 @@ public class OpenApiFileResolver : IOpenApiFileResolver
         if (Directory.Exists(path))
         {
             // Search for OpenAPI files in priority order: openapi.yaml, openapi.yml, openapi.json
-            foreach (var fileName in OpenApiFileNames)
+            var filePath = OpenApiFileNames
+                .Select(fileName => Path.Combine(path, fileName))
+                .FirstOrDefault(File.Exists);
+
+            if (filePath != null)
             {
-                var filePath = Path.Combine(path, fileName);
-                if (File.Exists(filePath))
-                {
-                    return filePath;
-                }
+                return filePath;
             }
 
             throw new FileNotFoundException($"No OpenAPI file found in directory '{path}'. Expected one of: {string.Join(", ", OpenApiFileNames)}");

@@ -35,13 +35,13 @@ public class OpenApiMapper : IOpenApiMapper
             return tanuki;
         }
 
-        foreach (var pathItem in document.Paths)
+        var paths = document.Paths
+            .Select(pathItem => MapPath(pathItem.Key, pathItem.Value, document))
+            .Where(path => path != null);
+
+        foreach (var path in paths)
         {
-            var path = MapPath(pathItem.Key, pathItem.Value, document);
-            if (path != null)
-            {
-                tanuki.Paths.Add(path);
-            }
+            tanuki.Paths.Add(path!);
         }
 
         return tanuki;
@@ -115,8 +115,10 @@ public class OpenApiMapper : IOpenApiMapper
             var property = obj.GetType().GetProperty(propertyName);
             return property?.GetValue(obj)?.ToString();
         }
-        catch
+        catch (Exception ex)
         {
+            // If reflection fails, log for diagnostics and return null as fallback
+            System.Diagnostics.Debug.WriteLine($"OpenApiMapper: Failed to read property '{propertyName}': {ex.Message}");
             return null;
         }
     }
@@ -142,8 +144,10 @@ public class OpenApiMapper : IOpenApiMapper
             }
             return result;
         }
-        catch
+        catch (Exception ex)
         {
+            // If reflection fails, log for diagnostics and return empty list as fallback
+            System.Diagnostics.Debug.WriteLine($"OpenApiMapper: Failed to read tags: {ex.Message}");
             return new List<string>();
         }
     }
@@ -192,13 +196,13 @@ public class OpenApiMapper : IOpenApiMapper
         // Map examples
         if (openApiMediaType.Examples != null && openApiMediaType.Examples.Any())
         {
-            foreach (var example in openApiMediaType.Examples)
+            var mappedExamples = openApiMediaType.Examples
+                .Select(example => MapExample(example.Key, example.Value))
+                .Where(mappedExample => mappedExample != null);
+
+            foreach (var mappedExample in mappedExamples)
             {
-                var mappedExample = MapExample(example.Key, example.Value);
-                if (mappedExample != null)
-                {
-                    content.Examples.Add(mappedExample);
-                }
+                content.Examples.Add(mappedExample!);
             }
         }
         // If no examples but there's a single example property, map it
@@ -302,9 +306,10 @@ public class OpenApiMapper : IOpenApiMapper
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // If reflection fails, try direct serialization
+            // If reflection fails, log for diagnostics and fall back to direct serialization
+            System.Diagnostics.Debug.WriteLine($"OpenApiMapper: Failed to read 'Value' property via reflection: {ex.Message}");
         }
 
         // Fallback: try to serialize the whole object
@@ -317,9 +322,12 @@ public class OpenApiMapper : IOpenApiMapper
             }
             return System.Text.Json.JsonSerializer.Serialize(value);
         }
-        catch
+        catch (Exception ex)
         {
-            // Final fallback: if value is a string, JSON-encode it; otherwise use ToString()
+            // Final fallback: log serialization failure and use ToString()
+            System.Diagnostics.Debug.WriteLine($"OpenApiMapper: Failed to serialize value: {ex.Message}");
+            
+            // If value is a string, JSON-encode it; otherwise use ToString()
             if (value is string finalStrValue)
             {
                 return System.Text.Json.JsonSerializer.Serialize(finalStrValue);
