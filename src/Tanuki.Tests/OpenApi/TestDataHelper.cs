@@ -32,11 +32,10 @@ public static class TestDataHelper
                 directory = directory.Parent;
             }
             
-            // Fallback to the original approach if directory search fails
-            return Path.Combine(
-                AppContext.BaseDirectory,
-                "..", "..", "..", "..", "..", // Go up from bin/Debug/net9.0 to project root
-                "src", "Tanuki.Tests", "TestData", "OpenApi");
+            // If the directory search fails, throw an exception with a helpful message
+            throw new DirectoryNotFoundException(
+                $"Could not locate test data directory. Searched from: {AppContext.BaseDirectory}. " +
+                "Expected to find a 'src' directory containing 'Tanuki.Tests/TestData/OpenApi'.");
         }
     }
 

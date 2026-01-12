@@ -57,7 +57,8 @@ public class OpenApiParser : IOpenApiParser
                 }
 
                 // Construct a cross-platform file:// URI (e.g., file:///C:/path/ on Windows, file:///path/ on Unix)
-                settings.BaseUrl = new Uri(new Uri("file:///"), basePath);
+                // Replace backslashes with forward slashes for URI consistency
+                settings.BaseUrl = new Uri($"file:///{basePath.Replace(Path.DirectorySeparatorChar, '/')}", UriKind.Absolute);
             }
             
             // Use OpenApiDocument.LoadAsync with stream - the library auto-detects format from stream content
