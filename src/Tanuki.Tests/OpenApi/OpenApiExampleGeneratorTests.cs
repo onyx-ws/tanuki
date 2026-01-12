@@ -565,4 +565,75 @@ public class OpenApiExampleGeneratorTests
             }
         }
     }
+
+    [Fact]
+    public async Task GenerateExample_WithObjectSchemaWithSpecialCharacterPropertyNames_EscapesPropertyNames()
+    {
+        // Arrange - Test property names with quotes, backslashes, and control characters
+        var tempFile = Path.GetTempFileName() + ".json";
+        try
+        {
+            var json = @"{
+  ""openapi"": ""3.0.0"",
+  ""info"": {
+    ""title"": ""Test API"",
+    ""version"": ""1.0.0""
+  },
+  ""paths"": {
+    ""/test"": {
+      ""get"": {
+        ""responses"": {
+          ""200"": {
+            ""description"": ""Success"",
+            ""content"": {
+              ""application/json"": {
+                ""schema"": {
+                  ""type"": ""object"",
+                  ""properties"": {
+                    ""test\""name"": {
+                      ""type"": ""string""
+                    },
+                    ""test\\backslash"": {
+                      ""type"": ""integer""
+                    },
+                    ""test\nnewline"": {
+                      ""type"": ""boolean""
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}";
+            await File.WriteAllTextAsync(tempFile, json);
+            var document = await _documentLoader.LoadAsync(tempFile);
+            var operation = document.Paths["/test"].Operations.First().Value;
+            var schema = operation.Responses["200"].Content["application/json"].Schema;
+
+            // Act
+            var result = _generator.GenerateExample(schema, document);
+
+            // Assert
+            Assert.NotNull(result);
+            // Verify the JSON is valid and can be parsed
+            var jsonDoc = System.Text.Json.JsonDocument.Parse(result);
+            Assert.True(jsonDoc.RootElement.TryGetProperty("test\"name", out var quoteProp));
+            Assert.Equal("string", quoteProp.GetString());
+            Assert.True(jsonDoc.RootElement.TryGetProperty("test\\backslash", out var backslashProp));
+            Assert.Equal(0, backslashProp.GetInt32());
+            Assert.True(jsonDoc.RootElement.TryGetProperty("test\nnewline", out var newlineProp));
+            Assert.False(newlineProp.GetBoolean());
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
 }

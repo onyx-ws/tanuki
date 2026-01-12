@@ -118,7 +118,9 @@ public class OpenApiExampleGenerator : IOpenApiExampleGenerator
                 var propertyExample = GenerateExample((IOpenApiSchema)propertySchema, document);
                 if (propertyExample != null)
                 {
-                    jsonProperties.Add($"\"{propertyName}\": {propertyExample}");
+                    // JSON-escape the property name to handle special characters (quotes, backslashes, control chars)
+                    var escapedPropertyName = JsonSerializer.Serialize(propertyName);
+                    jsonProperties.Add($"{escapedPropertyName}: {propertyExample}");
                 }
             }
         }
