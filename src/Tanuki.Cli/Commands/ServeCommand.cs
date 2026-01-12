@@ -11,7 +11,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Onyx.Tanuki;
 using Onyx.Tanuki.Configuration;
-using Onyx.Tanuki.Configuration.Json;
 using Onyx.Tanuki.Constants;
 using Onyx.Tanuki.OpenApi;
 using Onyx.Tanuki.Simulation;
