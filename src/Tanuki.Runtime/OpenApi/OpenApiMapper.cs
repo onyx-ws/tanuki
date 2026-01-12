@@ -280,10 +280,10 @@ public class OpenApiMapper : IOpenApiMapper
                     var actualValue = valueProperty.GetValue(value);
                     if (actualValue != null)
                     {
-                        // For strings, return directly
+                        // For strings, JSON-encode them (add quotes) since Example.Value must be valid JSON
                         if (actualValue is string str)
                         {
-                            return str;
+                            return System.Text.Json.JsonSerializer.Serialize(str);
                         }
                         // For numbers, convert to string
                         if (actualValue is int || actualValue is long || actualValue is double || actualValue is float || actualValue is decimal)
