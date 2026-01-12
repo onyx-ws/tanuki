@@ -238,6 +238,9 @@ public class ServeCommand
                 // Add all Tanuki services first (this registers all dependencies)
                 builder.Services.AddTanuki(builder.Configuration);
                 
+                // Capture the non-null value in a local variable for the lambda
+                var config = tanukiConfig;
+                
                 // Override ITanukiConfigurationService with InMemoryConfigurationService
                 // Use AddSingleton to replace the TryAddSingleton registration from AddTanuki
                 builder.Services.AddSingleton<ITanukiConfigurationService>(sp =>
@@ -246,7 +249,7 @@ public class ServeCommand
                     var externalValueFetcher = sp.GetRequiredService<IExternalValueFetcher>();
                     var logger = sp.GetService<ILogger<InMemoryConfigurationService>>();
                     
-                    return new InMemoryConfigurationService(tanukiConfig, validator, externalValueFetcher, logger);
+                    return new InMemoryConfigurationService(config, validator, externalValueFetcher, logger);
                 });
             }
             else
