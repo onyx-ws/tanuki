@@ -97,6 +97,14 @@ public class ServeCommand
             return;
         }
 
+        // Validate that both --config and --openapi are not specified
+        if (configFile != null && openApiFile != null)
+        {
+            Console.Error.WriteLine("Error: Cannot specify both --config and --openapi. Please specify only one.");
+            Environment.ExitCode = 1;
+            return;
+        }
+
         Console.WriteLine($"Starting Tanuki server on {host}:{port}...");
 
         var builder = WebApplication.CreateBuilder();
