@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.OpenApi;
 using Onyx.Tanuki.Configuration;
 
@@ -285,10 +286,10 @@ public class OpenApiMapper : IOpenApiMapper
                         {
                             return System.Text.Json.JsonSerializer.Serialize(str);
                         }
-                        // For numbers, convert to string
+                        // For numbers, convert to string using invariant culture to ensure valid JSON
                         if (actualValue is int || actualValue is long || actualValue is double || actualValue is float || actualValue is decimal)
                         {
-                            return actualValue.ToString() ?? string.Empty;
+                            return actualValue.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
                         }
                         // For booleans, convert to lowercase string
                         if (actualValue is bool boolVal)
@@ -322,6 +323,11 @@ public class OpenApiMapper : IOpenApiMapper
             if (value is string finalStrValue)
             {
                 return System.Text.Json.JsonSerializer.Serialize(finalStrValue);
+            }
+            // For numeric types, use invariant culture to ensure valid JSON
+            if (value is int || value is long || value is double || value is float || value is decimal)
+            {
+                return value.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
             }
             return value?.ToString() ?? string.Empty;
         }
