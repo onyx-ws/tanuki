@@ -229,10 +229,29 @@ public class ServeCommand
                 var configForService = tanukiConfig;
                 // Get assembly from TanukiServices which is only in Onyx.Tanuki (not in Tanuki.Runtime)
                 var onyxTanukiAssembly = typeof(TanukiServices).Assembly;
-                var inMemoryServiceType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.InMemoryConfigurationService")!;
-                var serviceInterfaceType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.ITanukiConfigurationService")!;
-                var validatorType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.IConfigurationValidator")!;
-                var fetcherType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.IExternalValueFetcher")!;
+                var inMemoryServiceType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.InMemoryConfigurationService");
+                var serviceInterfaceType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.ITanukiConfigurationService");
+                var validatorType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.IConfigurationValidator");
+                var fetcherType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.IExternalValueFetcher");
+                
+                // Validate that all required types were found
+                if (inMemoryServiceType == null)
+                {
+                    throw new InvalidOperationException("Failed to locate InMemoryConfigurationService type in Onyx.Tanuki assembly. The type may have been renamed or moved.");
+                }
+                if (serviceInterfaceType == null)
+                {
+                    throw new InvalidOperationException("Failed to locate ITanukiConfigurationService type in Onyx.Tanuki assembly. The type may have been renamed or moved.");
+                }
+                if (validatorType == null)
+                {
+                    throw new InvalidOperationException("Failed to locate IConfigurationValidator type in Onyx.Tanuki assembly. The type may have been renamed or moved.");
+                }
+                if (fetcherType == null)
+                {
+                    throw new InvalidOperationException("Failed to locate IExternalValueFetcher type in Onyx.Tanuki assembly. The type may have been renamed or moved.");
+                }
+                
                 var loggerType = typeof(ILogger<>).MakeGenericType(inMemoryServiceType);
                 
                 builder.Services.AddSingleton(serviceInterfaceType, sp =>
@@ -240,9 +259,24 @@ public class ServeCommand
                     var validator = sp.GetRequiredService(validatorType);
                     var externalValueFetcher = sp.GetRequiredService(fetcherType);
                     var logger = sp.GetService(loggerType);
+                    
                     // Use reflection to create InMemoryConfigurationService with the config object
-                    var constructor = inMemoryServiceType.GetConstructors()[0];
-                    return constructor.Invoke(new[] { configForService, validator, externalValueFetcher, logger });
+                    var constructors = inMemoryServiceType.GetConstructors();
+                    if (constructors.Length == 0)
+                    {
+                        throw new InvalidOperationException($"No public constructors found on type {inMemoryServiceType.FullName}");
+                    }
+                    
+                    var constructor = constructors[0];
+                    try
+                    {
+                        return constructor.Invoke(new[] { configForService, validator, externalValueFetcher, logger })
+                            ?? throw new InvalidOperationException($"Constructor for {inMemoryServiceType.FullName} returned null");
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException($"Failed to create instance of {inMemoryServiceType.FullName} via reflection. Constructor parameters may have changed.", ex);
+                    }
                 });
             }
             else
