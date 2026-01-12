@@ -156,9 +156,7 @@ public class ServeCommand
         }
 
         // Determine configuration source: OpenAPI takes precedence over config file
-        // Use dynamic to avoid type ambiguity between Onyx.Tanuki and Tanuki.Runtime
-        // Both projects define the same types in the same namespace, causing CS0433
-        object? tanukiConfig = null;
+        Onyx.Tanuki.Configuration.Tanuki? tanukiConfig = null;
         
         if (openApiFile != null)
         {
@@ -178,7 +176,6 @@ public class ServeCommand
                 var openApiDocument = await documentLoader.LoadAsync(openApiFile.FullName);
                 
                 // Map OpenAPI document to Tanuki config
-                // The mapper returns Onyx.Tanuki.Configuration.Tanuki
                 var mapper = new OpenApiMapper();
                 tanukiConfig = mapper.Map(openApiDocument);
                 
@@ -241,60 +238,18 @@ public class ServeCommand
                 // Add all Tanuki services first (this registers all dependencies)
                 builder.Services.AddTanuki(builder.Configuration);
                 
+                // Capture the non-null value in a local variable for the lambda
+                var config = tanukiConfig;
+                
                 // Override ITanukiConfigurationService with InMemoryConfigurationService
                 // Use AddSingleton to replace the TryAddSingleton registration from AddTanuki
-                // Note: We use reflection to avoid type ambiguity (CS0433) between Onyx.Tanuki and Tanuki.Runtime
-                var configForService = tanukiConfig;
-                // Get assembly from TanukiServices which is only in Onyx.Tanuki (not in Tanuki.Runtime)
-                var onyxTanukiAssembly = typeof(TanukiServices).Assembly;
-                var inMemoryServiceType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.InMemoryConfigurationService");
-                var serviceInterfaceType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.ITanukiConfigurationService");
-                var validatorType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.IConfigurationValidator");
-                var fetcherType = onyxTanukiAssembly.GetType("Onyx.Tanuki.Configuration.IExternalValueFetcher");
-                
-                // Validate that all required types were found
-                if (inMemoryServiceType == null)
+                builder.Services.AddSingleton<ITanukiConfigurationService>(sp =>
                 {
-                    throw new InvalidOperationException("Failed to locate InMemoryConfigurationService type in Onyx.Tanuki assembly. The type may have been renamed or moved.");
-                }
-                if (serviceInterfaceType == null)
-                {
-                    throw new InvalidOperationException("Failed to locate ITanukiConfigurationService type in Onyx.Tanuki assembly. The type may have been renamed or moved.");
-                }
-                if (validatorType == null)
-                {
-                    throw new InvalidOperationException("Failed to locate IConfigurationValidator type in Onyx.Tanuki assembly. The type may have been renamed or moved.");
-                }
-                if (fetcherType == null)
-                {
-                    throw new InvalidOperationException("Failed to locate IExternalValueFetcher type in Onyx.Tanuki assembly. The type may have been renamed or moved.");
-                }
-                
-                var loggerType = typeof(ILogger<>).MakeGenericType(inMemoryServiceType);
-                
-                builder.Services.AddSingleton(serviceInterfaceType, sp =>
-                {
-                    var validator = sp.GetRequiredService(validatorType);
-                    var externalValueFetcher = sp.GetRequiredService(fetcherType);
-                    var logger = sp.GetService(loggerType);
+                    var validator = sp.GetRequiredService<IConfigurationValidator>();
+                    var externalValueFetcher = sp.GetRequiredService<IExternalValueFetcher>();
+                    var logger = sp.GetService<ILogger<InMemoryConfigurationService>>();
                     
-                    // Use reflection to create InMemoryConfigurationService with the config object
-                    var constructors = inMemoryServiceType.GetConstructors();
-                    if (constructors.Length == 0)
-                    {
-                        throw new InvalidOperationException($"No public constructors found on type {inMemoryServiceType.FullName}");
-                    }
-                    
-                    var constructor = constructors[0];
-                    try
-                    {
-                        return constructor.Invoke(new[] { configForService, validator, externalValueFetcher, logger })
-                            ?? throw new InvalidOperationException($"Constructor for {inMemoryServiceType.FullName} returned null");
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidOperationException($"Failed to create instance of {inMemoryServiceType.FullName} via reflection. Constructor parameters may have changed.", ex);
-                    }
+                    return new InMemoryConfigurationService(config, validator, externalValueFetcher, logger);
                 });
             }
             else
