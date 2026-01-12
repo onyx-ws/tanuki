@@ -91,7 +91,7 @@ public class ValidateCommand
         {
             if (jsonOutput)
             {
-                Console.WriteLine($"{{\"valid\": false, \"errors\": [{{\"message\": \"Configuration file not found: {System.Text.Json.JsonSerializer.Serialize(configFile.FullName)}\"}}]}}");
+                Console.WriteLine($"{{\"valid\": false, \"errors\": [{{\"message\": {System.Text.Json.JsonSerializer.Serialize($"Configuration file not found: {configFile.FullName}")}}}]}}");
             }
             else
             {
