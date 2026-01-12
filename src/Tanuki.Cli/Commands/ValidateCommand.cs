@@ -180,7 +180,7 @@ public class ValidateCommand
             var documentLoader = new OpenApiDocumentLoader(fileResolver, fileLoader, parser, validator, logger: null);
             
             // Load and validate the OpenAPI document
-            var document = await documentLoader.LoadAsync(openApiFile.FullName);
+            await documentLoader.LoadAsync(openApiFile.FullName);
             
             if (jsonOutput)
             {

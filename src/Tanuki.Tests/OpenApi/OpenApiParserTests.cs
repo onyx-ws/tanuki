@@ -73,7 +73,7 @@ public class OpenApiParserTests
           "paths": {}
         }
         """;
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
 
         // Act
         var result = await _parser.ParseAsync(stream, OpenApiFormat.Json);
@@ -89,7 +89,7 @@ public class OpenApiParserTests
     {
         // Arrange
         var invalidJson = "{ invalid json }";
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidJson));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidJson));
 
         // Act
         var result = await _parser.ParseAsync(stream, OpenApiFormat.Json);
@@ -106,7 +106,7 @@ public class OpenApiParserTests
     {
         // Arrange
         var invalidYaml = "invalid: yaml: content: [";
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidYaml));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidYaml));
 
         // Act
         var result = await _parser.ParseAsync(stream, OpenApiFormat.Yaml);
@@ -131,7 +131,7 @@ public class OpenApiParserTests
           "paths": {}
         }
         """;
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
 
         // Act
         var result = await _parser.ParseAsync(stream, OpenApiFormat.Json);
@@ -146,7 +146,7 @@ public class OpenApiParserTests
     public async Task ParseAsync_WithEmptyStream_ReturnsErrorResult()
     {
         // Arrange
-        var stream = new MemoryStream();
+        using var stream = new MemoryStream();
 
         // Act
         var result = await _parser.ParseAsync(stream, OpenApiFormat.Json);
@@ -190,7 +190,7 @@ public class OpenApiParserTests
                       schema:
                         $ref: './user.yaml'
         """;
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(mainYaml));
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(mainYaml));
 
         try
         {
