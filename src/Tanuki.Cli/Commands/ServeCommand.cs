@@ -84,6 +84,15 @@ public class ServeCommand
 
     private static async Task ExecuteAsync(int port, string host, FileInfo? configFile, FileInfo? openApiFile, bool verbose)
     {
+        // Validate that both --config and --openapi are not specified
+        // This check must come first to match ValidateCommand behavior
+        if (configFile != null && openApiFile != null)
+        {
+            Console.Error.WriteLine("Error: Cannot specify both --config and --openapi. Please specify only one.");
+            Environment.ExitCode = 1;
+            return;
+        }
+
         // Validate port range
         if (port < 1 || port > 65535)
         {
@@ -96,14 +105,6 @@ public class ServeCommand
         if (string.IsNullOrWhiteSpace(host))
         {
             Console.WriteLine("Error: Host cannot be empty");
-            Environment.ExitCode = 1;
-            return;
-        }
-
-        // Validate that both --config and --openapi are not specified
-        if (configFile != null && openApiFile != null)
-        {
-            Console.Error.WriteLine("Error: Cannot specify both --config and --openapi. Please specify only one.");
             Environment.ExitCode = 1;
             return;
         }
