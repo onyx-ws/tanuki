@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Tanuki::Onyx.Tanuki;
-using Tanuki::Onyx.Tanuki.Configuration;
 using Onyx.Tanuki.Configuration; // For TanukiOptions from Runtime
 using Xunit;
 
