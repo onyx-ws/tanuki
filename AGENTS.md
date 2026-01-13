@@ -80,7 +80,7 @@ When modifying the configuration schema, you **MUST** adhere to the following:
 ## Development Standards
 
 ### Technology Stack
-*   **Language**: C# 12 / .NET 9.0.
+*   **Language**: C# 13 / .NET 9.0.
 *   **Web Framework**: ASP.NET Core (Minimal APIs & Middleware).
 *   **CLI Framework**: `System.CommandLine`.
 *   **JSON**: `System.Text.Json`.
