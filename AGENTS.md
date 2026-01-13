@@ -116,12 +116,10 @@ You **MUST** follow the **Red-Green-Refactor** cycle for all logical changes:
 // ✅ Good - Primary Constructor, Collection Expression, Async
 public class UserService(IUserRepository repository, ILogger<UserService> logger)
 {
-    private readonly IUserRepository _repository = repository;
-    
     public async Task<IEnumerable<User>> GetUsersAsync()
     {
         logger.LogInformation("Fetching users");
-        var users = await _repository.GetAllAsync();
+        var users = await repository.GetAllAsync();
         return users ?? []; // Empty collection expression
     }
 }
