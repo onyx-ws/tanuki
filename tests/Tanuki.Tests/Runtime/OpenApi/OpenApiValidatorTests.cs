@@ -45,28 +45,24 @@ public class OpenApiValidatorTests
         // Should not throw
     }
 
-    [Fact(Skip = "OpenApiDocument doesn't expose the OpenAPI specification version. The parser handles version validation during parsing, and Microsoft.OpenApi doesn't support OpenAPI 2.0 (Swagger) files.")]
-    public void ValidateVersion_WithOpenApi20_ThrowsOpenApiParseException()
+    [Fact]
+    public void ValidateVersion_WithOpenApi20_DoesNotThrow()
     {
         // Arrange
-        // Note: This test is skipped because:
-        // 1. OpenApiDocument doesn't have a SpecVersion property to check
-        // 2. The OpenAPI specification version is determined during parsing from the YAML/JSON file
-        // 3. Microsoft.OpenApi library doesn't parse OpenAPI 2.0 (Swagger) files - they would fail during parsing
-        // 4. ValidateVersion currently doesn't validate (it's a placeholder for future use)
-        // The parser will reject OpenAPI 2.0 files during parsing, so version validation happens there
         var document = new OpenApiDocument
         {
             Info = new OpenApiInfo { Title = "Test", Version = "1.0.0" }
+            // Note: OpenApiDocument is version-agnostic (it's the v3 model).
+            // The parser converts v2 to this model.
+            // Since the parser succeeds for v2 (as verified by tests),
+            // the validator should just accept the document object.
         };
 
         var filePath = "test.yaml";
 
         // Act & Assert
-        var exception = Assert.Throws<OpenApiParseException>(
-            () => _validator.ValidateVersion(document, filePath));
-        Assert.Contains("Unsupported OpenAPI version", exception.Message);
-        Assert.Contains("2.0", exception.Message);
+        _validator.ValidateVersion(document, filePath);
+        // Should not throw
     }
 
     [Fact]

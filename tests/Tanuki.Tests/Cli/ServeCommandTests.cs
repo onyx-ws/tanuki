@@ -9,7 +9,7 @@ namespace Onyx.Tanuki.Tests.Cli;
 public class ServeCommandTests
 {
     [Fact]
-    public void ServeCommand_WithOnlyOpenApiOption_DoesNotThrowMutualExclusivityError()
+    public void ServeCommand_WithOpenApiOption_ParsesSuccessfully()
     {
         // Arrange
         var command = ServeCommand.Create();
@@ -42,7 +42,7 @@ public class ServeCommandTests
     }
 
     [Fact]
-    public void ServeCommand_WithOnlyConfigOption_Works()
+    public void ServeCommand_WithConfigOption_ParsesSuccessfully()
     {
         // Arrange
         var command = ServeCommand.Create();
@@ -127,7 +127,7 @@ public class ServeCommandTests
     }
 
     [Fact]
-    public void ServeCommand_ConfigFileOption_CanBeNull()
+    public void ServeCommand_Parse_WithoutConfigOption_DoesNotError()
     {
         // Arrange
         var command = ServeCommand.Create();
@@ -145,7 +145,7 @@ public class ServeCommandTests
     }
 
     [Fact]
-    public void ServeCommand_OpenApiOption_WorksWithoutConfigOption()
+    public void ServeCommand_WithOpenApiOption_BindsOptionsCorrectly()
     {
         // Arrange
         var command = ServeCommand.Create();
@@ -157,11 +157,42 @@ public class ServeCommandTests
         Assert.True(File.Exists(openApiFile), $"Test data file not found: {openApiFile}");
         
         // Act - Invoke with only --openapi option
-        var args = new[] { "serve", "--openapi", openApiFile };
-        var exitCode = rootCommand.Invoke(args);
+        // Note: Invoke returns an exit code. 
+        // 0 = Success (app started and stopped gracefully, or helped shown)
+        // 1 = Error (app crashed or returned error)
+        // The test runner might capture the process exit which causes the crash.
+        // We really only want to verify the argument parsing, not the full server startup which blocks.
+        // However, ServeCommand.ExecuteAsync actually starts the server.
         
-        // Assert - Should not fail with mutual exclusivity error
-        // Note: May fail for other reasons (server startup), but mutual exclusivity should not be the issue
-        Assert.True(true, "Command parsed successfully with only --openapi option");
+        // For unit testing argument parsing, we should ideally not start the Kestrel server.
+        // But since the logic is coupled in ExecuteAsync, we can assume that if it gets past the 
+        // mutual exclusivity check, it will try to start the server.
+        
+        // This test is crashing because it actually tries to start the server on a port (5000),
+        // and in the test environment, this might be failing or conflicting, or the shutdown
+        // via CancellationToken is not handled gracefully in the test context.
+        
+        // Since we already verified ServeCommand_WithOnlyOpenApiOption_DoesNotThrowMutualExclusivityError
+        // which does essentially the same thing but with a temp file (and fails for different reasons),
+        // this test is somewhat redundant for testing the *CLI parsing*.
+        
+        // To fix the crash, we can wrap this in a way that expects the "Server startup" failure 
+        // if it proceeds past the argument validation.
+        
+        var args = new[] { "serve", "--openapi", openApiFile };
+        
+        // We cannot easily mock the WebApplication start inside the static method.
+        // So we will just assert that the command object is configured correctly.
+        
+        var parseResult = rootCommand.Parse(args);
+        var openApiOption = command.Options.First(o => o.Aliases.Contains("--openapi"));
+        var configOption = command.Options.First(o => o.Aliases.Contains("--config"));
+        
+        var openApiResult = parseResult.GetValueForOption(openApiOption);
+        var configResult = parseResult.GetValueForOption(configOption);
+        
+        Assert.NotNull(openApiResult);
+        Assert.Null(configResult);
+        Assert.Empty(parseResult.Errors);
     }
 }
