@@ -1,7 +1,5 @@
-extern alias Tanuki;
-
 using System.Text.Json;
-using Tanuki::Onyx.Tanuki.Configuration;
+using Onyx.Tanuki.Configuration;
 using Onyx.Tanuki.Configuration.Exceptions;
 using Onyx.Tanuki.Configuration.Json;
 using Xunit;
