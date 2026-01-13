@@ -61,7 +61,10 @@ The server will start on `http://localhost:5000` by default.
 - `--port, -p` - Port to listen on (default: 5000)
 - `--host, -h` - Host to bind to (default: localhost)
 - `--config, -c` - Path to tanuki.json configuration file (default: ./tanuki.json)
+- `--openapi, -o` - Path to OpenAPI specification file (JSON or YAML)
 - `--verbose, -v` - Enable verbose logging with detailed request/response information
+
+Note: The `--config` and `--openapi` options are mutually exclusive.
 
 **Examples:**
 ```bash
@@ -73,6 +76,9 @@ dotnet run --project src/Tanuki.Cli/Tanuki.Cli.csproj -- serve --verbose
 
 # Use a custom configuration file
 dotnet run --project src/Tanuki.Cli/Tanuki.Cli.csproj -- serve --config my-api.json
+
+# Use an OpenAPI specification file
+dotnet run --project src/Tanuki.Cli/Tanuki.Cli.csproj -- serve --openapi openapi.yaml
 ```
 
 #### 3. Validate configuration
@@ -243,7 +249,10 @@ tanuki serve [options]
 - `-p, --port <port>` - Port to listen on [default: 5000]
 - `-h, --host <host>` - Host to bind to [default: localhost]
 - `-c, --config <config>` - Path to tanuki.json configuration file [default: ./tanuki.json]
+- `-o, --openapi <openapi>` - Path to OpenAPI specification file (JSON or YAML)
 - `-v, --verbose` - Enable verbose logging (shows request/response details) [default: False]
+
+**Note:** The `--config` and `--openapi` options are mutually exclusive.
 
 ### `validate`
 
@@ -306,7 +315,7 @@ tanuki init [options]
 
 ## Examples
 
-See `tanuki.json` in the root directory or `src/Tanuki/tanuki.json` for complete example configurations.
+See `tanuki.json` in the root directory for complete example configurations.
 
 ## Using as a Library
 
@@ -371,9 +380,8 @@ Run CLI regression tests:
 ### Project Structure
 
 - `src/Tanuki.Cli/` - Command-line interface application
-- `src/Tanuki/` - Main library and web application
-- `src/Tanuki.Runtime/` - Runtime components (shared with CLI)
-- `src/Tanuki.Tests/` - Unit and integration tests
+- `src/Tanuki.Runtime/` - Core library and runtime components
+- `tests/Tanuki.Tests/` - Unit and integration tests
 
 ## Contribution
 
