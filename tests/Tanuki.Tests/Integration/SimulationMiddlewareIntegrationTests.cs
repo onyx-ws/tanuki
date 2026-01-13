@@ -1,15 +1,18 @@
-extern alias Tanuki;
-
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Onyx.Tanuki; // Extension methods now in Runtime
-using Onyx.Tanuki.Configuration; // For TanukiOptions from Runtime
+using Microsoft.Extensions.Logging;
+using Onyx.Tanuki;
+using Onyx.Tanuki.Configuration;
+using Onyx.Tanuki.Constants;
 using Xunit;
 
 namespace Onyx.Tanuki.Tests.Integration;
@@ -17,17 +20,71 @@ namespace Onyx.Tanuki.Tests.Integration;
 /// <summary>
 /// Integration tests for SimulationMiddleware
 /// </summary>
-public class SimulationMiddlewareIntegrationTests : IClassFixture<TestWebApplicationFactory>
+public class SimulationMiddlewareIntegrationTests : IDisposable
 {
-    private readonly TestWebApplicationFactory _factory;
-    private HttpClient? _client;
+    private readonly TestServer _server;
+    private readonly HttpClient _client;
 
-    public SimulationMiddlewareIntegrationTests(TestWebApplicationFactory factory)
+    public SimulationMiddlewareIntegrationTests()
     {
-        _factory = factory;
+        var testDataDir = System.IO.Path.GetFullPath(
+            System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "TestData", "Config"));
+        
+        var configPath = System.IO.Path.Combine(testDataDir, "tanuki.json");
+
+        // Ensure directory exists
+        if (!Directory.Exists(testDataDir))
+        {
+            Directory.CreateDirectory(testDataDir);
+        }
+
+        // If config file doesn't exist, create a dummy one for tests if needed, 
+        // or assume it was copied correctly.
+        // For now, we assume it exists as per previous steps.
+
+        var builder = new WebHostBuilder()
+            .UseEnvironment("Testing")
+            .ConfigureAppConfiguration((context, config) => 
+            {
+                if (File.Exists(configPath))
+                {
+                    config.AddJsonFile(configPath, optional: false);
+                }
+            })
+            .ConfigureServices((context, services) =>
+            {
+                services.AddLogging(logging => 
+                {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                });
+                
+                services.AddTanuki(context.Configuration);
+                
+                // Ensure configuration file path is set correctly in options
+                services.Configure<TanukiOptions>(options =>
+                {
+                    options.ConfigurationFilePath = configPath;
+                });
+            })
+            .Configure(app =>
+            {
+                app.UseTanukiExceptionHandling();
+                app.UseHealthChecks(TanukiConstants.HealthCheckPath);
+                app.UseSimulator();
+            });
+
+        _server = new TestServer(builder);
+        _client = _server.CreateClient();
     }
 
-    private HttpClient Client => _client ??= _factory.CreateClient();
+    public void Dispose()
+    {
+        _client.Dispose();
+        _server.Dispose();
+    }
+
+    private HttpClient Client => _client;
 
     [Fact]
     public async Task GetRequest_ReturnsConfiguredResponse()
@@ -52,13 +109,9 @@ public class SimulationMiddlewareIntegrationTests : IClassFixture<TestWebApplica
         // Assert
         Assert.Equal(HttpStatusCode.OK, response1.StatusCode);
         Assert.Equal(HttpStatusCode.OK, response2.StatusCode);
-        // At least one should succeed (may be same or different)
-        // Note: External values may not be fetched in test environment, so content might be empty
         var content1 = await response1.Content.ReadAsStringAsync();
         var content2 = await response2.Content.ReadAsStringAsync();
-        // At least one response should have content (either inline or external)
-        Assert.True(!string.IsNullOrEmpty(content1) || !string.IsNullOrEmpty(content2), 
-            "At least one random response should have content");
+        Assert.True(!string.IsNullOrEmpty(content1) || !string.IsNullOrEmpty(content2));
     }
 
     [Fact]
@@ -88,7 +141,8 @@ public class SimulationMiddlewareIntegrationTests : IClassFixture<TestWebApplica
     [Fact]
     public async Task GetRequest_WithAcceptHeader_ReturnsMatchingContentType()
     {
-        // Act - Request XML
+        // Act - Request XML (assuming configured in tanuki.json, usually it's /api/v0.1/data in examples)
+        // Checking previous file content, /api/v0.1/data supports XML
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/v0.1/data");
         request.Headers.Accept.ParseAdd("application/xml");
         var response = await Client.SendAsync(request);
@@ -128,7 +182,7 @@ public class SimulationMiddlewareIntegrationTests : IClassFixture<TestWebApplica
     }
 
     [Fact]
-    public async Task Request_NonExistentPath_ReturnsNotFound()
+    public async Task GetRequest_NonExistentPath_ReturnsNotFound()
     {
         // Act
         var response = await Client.GetAsync("/api/nonexistent");
@@ -138,7 +192,7 @@ public class SimulationMiddlewareIntegrationTests : IClassFixture<TestWebApplica
     }
 
     [Fact]
-    public async Task Request_WrongMethod_ReturnsMethodNotAllowed()
+    public async Task DeleteRequest_UnconfiguredMethod_ReturnsMethodNotAllowed()
     {
         // Act - DELETE is not configured for /api/v0.1/ping
         var response = await Client.DeleteAsync("/api/v0.1/ping");
@@ -157,42 +211,3 @@ public class SimulationMiddlewareIntegrationTests : IClassFixture<TestWebApplica
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }
-
-/// <summary>
-/// Factory for creating test web application
-/// </summary>
-public class TestWebApplicationFactory : WebApplicationFactory<Tanuki::Program>
-{
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        // Set test environment to skip async initialization during discovery
-        builder.UseEnvironment("Testing");
-        
-        // Configure content root to point to Tanuki project directory
-        var tanukiProjectDir = System.IO.Path.GetFullPath(
-            System.IO.Path.Combine(
-                AppContext.BaseDirectory,
-                "..", "..", "..", "..", "Tanuki"));
-        
-        builder.UseContentRoot(tanukiProjectDir);
-        
-        builder.ConfigureServices((context, services) =>
-        {
-            // Override configuration file path for testing
-            var configPath = System.IO.Path.Combine(tanukiProjectDir, "tanuki.json");
-            
-            if (!File.Exists(configPath))
-            {
-                throw new FileNotFoundException(
-                    $"Test configuration file not found at: {configPath}. " +
-                    $"Base directory: {AppContext.BaseDirectory}");
-            }
-            
-            services.Configure<TanukiOptions>(options =>
-            {
-                options.ConfigurationFilePath = configPath;
-            });
-        });
-    }
-}
-

@@ -22,7 +22,15 @@ public static class TestDataHelper
                 var srcDir = Path.Combine(directory.FullName, "src");
                 if (Directory.Exists(srcDir))
                 {
-                    var testDataPath = Path.Combine(srcDir, "Tanuki.Tests", "TestData", "OpenApi");
+                    // Look in tests directory
+                    var testDataPath = Path.Combine(directory.FullName, "tests", "Tanuki.Tests", "TestData", "OpenApi");
+                    if (Directory.Exists(testDataPath))
+                    {
+                        return testDataPath;
+                    }
+
+                    // Fallback for old structure (just in case)
+                    testDataPath = Path.Combine(srcDir, "Tanuki.Tests", "TestData", "OpenApi");
                     if (Directory.Exists(testDataPath))
                     {
                         return testDataPath;

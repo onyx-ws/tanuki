@@ -22,9 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Tanuki\Onyx.Tanuki.csproj" Aliases="Tanuki" />
-    <ProjectReference Include="..\Tanuki.Runtime\Tanuki.Runtime.csproj" />
-    <ProjectReference Include="..\Tanuki.Cli\Tanuki.Cli.csproj" />
+    <ProjectReference Include="..\..\src\Tanuki.Runtime\Tanuki.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\Tanuki.Cli\Tanuki.Cli.csproj" />
   </ItemGroup>
 
 </Project>

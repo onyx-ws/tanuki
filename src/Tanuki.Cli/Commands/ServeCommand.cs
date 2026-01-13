@@ -74,39 +74,42 @@ public class ServeCommand
         command.AddOption(openApiFileOption);
         command.AddOption(verboseOption);
 
-        command.SetHandler(async (int port, string host, FileInfo? configFile, FileInfo? openApiFile, bool verbose) =>
+        command.SetHandler(async (context) =>
         {
-            await ExecuteAsync(port, host, configFile, openApiFile, verbose);
-        }, portOption, hostOption, configFileOption, openApiFileOption, verboseOption);
+            var port = context.ParseResult.GetValueForOption(portOption);
+            var host = context.ParseResult.GetValueForOption(hostOption);
+            var configFile = context.ParseResult.GetValueForOption(configFileOption);
+            var openApiFile = context.ParseResult.GetValueForOption(openApiFileOption);
+            var verbose = context.ParseResult.GetValueForOption(verboseOption);
+
+            context.ExitCode = await ExecuteAsync(port, host!, configFile, openApiFile, verbose);
+        });
 
         return command;
     }
 
-    private static async Task ExecuteAsync(int port, string host, FileInfo? configFile, FileInfo? openApiFile, bool verbose)
+    private static async Task<int> ExecuteAsync(int port, string host, FileInfo? configFile, FileInfo? openApiFile, bool verbose)
     {
         // Validate that both --config and --openapi are not specified
         // This check must come first to match ValidateCommand behavior
         if (configFile != null && openApiFile != null)
         {
             Console.Error.WriteLine("Error: Cannot specify both --config and --openapi. Please specify only one.");
-            Environment.ExitCode = 1;
-            return;
+            return 1;
         }
 
         // Validate port range
         if (port < 1 || port > 65535)
         {
             Console.WriteLine($"Error: Port must be between 1 and 65535. Provided: {port}");
-            Environment.ExitCode = 1;
-            return;
+            return 1;
         }
 
         // Validate host
         if (string.IsNullOrWhiteSpace(host))
         {
             Console.WriteLine("Error: Host cannot be empty");
-            Environment.ExitCode = 1;
-            return;
+            return 1;
         }
 
         // If neither option is provided, default to config file
@@ -202,14 +205,12 @@ public class ServeCommand
                         Console.Error.WriteLine($"  ⚠ {warning.Message}");
                     }
                 }
-                Environment.ExitCode = 1;
-                return;
+                return 1;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"\n✗ Error loading OpenAPI specification: {ex.Message}");
-                Environment.ExitCode = 1;
-                return;
+                return 1;
             }
         }
         else if (configFile != null && configFile.Exists)
@@ -225,8 +226,7 @@ public class ServeCommand
             Console.WriteLine("\nTo create a sample configuration file, run: tanuki init");
             Console.WriteLine("Or specify a different configuration file with: tanuki serve --config <path>");
             Console.WriteLine("Or use an OpenAPI specification with: tanuki serve --openapi <path>");
-            Environment.ExitCode = 1;
-            return;
+            return 1;
         }
 
         // Add Tanuki services
@@ -265,8 +265,7 @@ public class ServeCommand
             Console.WriteLine("\nTo create a sample configuration file, run: tanuki init");
             Console.WriteLine("Or specify a different configuration file with: tanuki serve --config <path>");
             Console.WriteLine("Or use an OpenAPI specification with: tanuki serve --openapi <path>");
-            Environment.ExitCode = 1;
-            return;
+            return 1;
         }
 
         // Configure Kestrel
@@ -297,7 +296,6 @@ public class ServeCommand
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: Failed to configure Kestrel: {ex.Message}");
-                Environment.ExitCode = 1;
                 throw;
             }
         });
@@ -332,17 +330,18 @@ public class ServeCommand
         try
         {
             await app.RunAsync(cts.Token);
+            return 0;
         }
         catch (OperationCanceledException)
         {
             // Expected when user cancels
             Console.WriteLine("Server shutdown complete.");
+            return 0;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Fatal error: {ex.Message}");
-            Environment.ExitCode = 1;
-            throw;
+            return 1;
         }
     }
 }
