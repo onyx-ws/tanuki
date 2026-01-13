@@ -6,7 +6,7 @@ using Onyx.Tanuki.Configuration.Exceptions;
 using Onyx.Tanuki.Configuration.Json;
 using Xunit;
 
-namespace Onyx.Tanuki.Tests.Configuration;
+namespace Onyx.Tanuki.Tests.Configuration.Json;
 
 public class JsonResponseParserTests
 {
