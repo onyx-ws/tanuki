@@ -27,7 +27,26 @@ public class SimulationMiddlewareIntegrationTests : IClassFixture<TestWebApplica
         _factory = factory;
     }
 
-    private HttpClient Client => _client ??= _factory.CreateClient();
+    private HttpClient Client
+    {
+        get
+        {
+            // #region agent log
+            try { System.IO.File.AppendAllText(@"c:\Users\moham\source\repos\onyx-tanuki\tanuki\.cursor\debug.log", System.Text.Json.JsonSerializer.Serialize(new { id = $"log_{DateTime.UtcNow.Ticks}", timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), location = "SimulationMiddlewareIntegrationTests.cs:30", message = "CreateClient called", data = new { clientIsNull = _client == null }, sessionId = "debug-session", runId = "run1", hypothesisId = "E" }) + "\n"); } catch { }
+            // #endregion
+            if (_client == null)
+            {
+                // #region agent log
+                try { System.IO.File.AppendAllText(@"c:\Users\moham\source\repos\onyx-tanuki\tanuki\.cursor\debug.log", System.Text.Json.JsonSerializer.Serialize(new { id = $"log_{DateTime.UtcNow.Ticks}", timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), location = "SimulationMiddlewareIntegrationTests.cs:33", message = "Before CreateClient", data = new { }, sessionId = "debug-session", runId = "run1", hypothesisId = "E" }) + "\n"); } catch { }
+                // #endregion
+                _client = _factory.CreateClient();
+                // #region agent log
+                try { System.IO.File.AppendAllText(@"c:\Users\moham\source\repos\onyx-tanuki\tanuki\.cursor\debug.log", System.Text.Json.JsonSerializer.Serialize(new { id = $"log_{DateTime.UtcNow.Ticks}", timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), location = "SimulationMiddlewareIntegrationTests.cs:35", message = "After CreateClient", data = new { }, sessionId = "debug-session", runId = "run1", hypothesisId = "E" }) + "\n"); } catch { }
+                // #endregion
+            }
+            return _client;
+        }
+    }
 
     [Fact]
     public async Task GetRequest_ReturnsConfiguredResponse()

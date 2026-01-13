@@ -2,7 +2,7 @@ extern alias Tanuki;
 
 using Tanuki::Onyx.Tanuki.Configuration;
 using Onyx.Tanuki.Configuration.Exceptions;
-using Tanuki::Onyx.Tanuki.Configuration.Json;
+using Onyx.Tanuki.Configuration.Json;
 using Xunit;
 
 namespace Onyx.Tanuki.Tests.Json;
