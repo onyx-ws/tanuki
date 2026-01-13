@@ -3,7 +3,7 @@ extern alias Tanuki;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Moq;
-using Tanuki::Onyx.Tanuki.Configuration;
+using Onyx.Tanuki.Configuration;
 using Xunit;
 using IResponseSelector = Tanuki::Onyx.Tanuki.Simulation.IResponseSelector;
 using ResponseSelector = Tanuki::Onyx.Tanuki.Simulation.ResponseSelector;
