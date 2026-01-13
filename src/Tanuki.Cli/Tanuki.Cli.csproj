@@ -2,12 +2,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tanuki.Runtime\Tanuki.Runtime.csproj" />
-    <ProjectReference Include="..\Tanuki\Onyx.Tanuki.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.3.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.3.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
