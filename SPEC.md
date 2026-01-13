@@ -7,7 +7,7 @@ Tanuki is a developer-flow-first API simulator for mocking RESTful web services.
 Tanuki does not aim to be a full contract-testing framework, schema validator, or OpenAPI server implementation. It focuses on fast, deterministic API simulation for local development and testing.
 
 ### 1.2. Core Goals
-*   **Zero-Code Simulation**: enable developers to mock complex APIs purely through JSON configuration.
+*   **Zero-Code Simulation**: Enable developers to mock complex APIs purely through JSON configuration.
 *   **Determinism**: Provide predictable responses based on explicit inputs (query params, headers) for reliable testing.
 *   **Developer Flow**: Ensure sub-second startup and low-friction integration into existing workflows (CLI, Docker, Middleware).
 
